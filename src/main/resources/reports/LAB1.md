@@ -2,7 +2,7 @@
 ## VARIANT 11
 
 Course: Formal Languages & Finite Automata  
-Author: Sonechka Ermicev
+Author: Sofia Ermicev
 
 ---
 
