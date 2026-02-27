@@ -221,9 +221,9 @@ public class FiniteAutomaton {
 
 ---
 
-### Main Class
+### MainLab1 Class
 
-The Main class demonstrates:
+The MainLab1 class demonstrates:
 
 1. String generation
 2. String validation using the finite automaton
@@ -231,7 +231,7 @@ The Main class demonstrates:
 ```
 import java.util.List;
 
-public class Main {
+public class MainLab1 {
 
   public static void main(String[] args) {
     Grammar grammar = new Grammar();

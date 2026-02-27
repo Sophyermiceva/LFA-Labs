@@ -7,6 +7,20 @@ public class Grammar {
   private Map<String, List<String>> productions; // P
   private String startSymbol; // S
 
+  /**
+   * Constructor for programmatic creation (e.g. from FA-to-Grammar conversion).
+   */
+  public Grammar(Set<String> nonTerminals, Set<String> terminals,
+                 Map<String, List<String>> productions, String startSymbol) {
+    this.nonTerminals = new HashSet<>(nonTerminals);
+    this.terminals = new HashSet<>(terminals);
+    this.productions = new HashMap<>();
+    for (Map.Entry<String, List<String>> e : productions.entrySet()) {
+      this.productions.put(e.getKey(), new ArrayList<>(e.getValue()));
+    }
+    this.startSymbol = startSymbol;
+  }
+
   public Grammar() {
     this.nonTerminals = Set.of("S", "B", "D");
     this.terminals = Set.of("a", "b", "c");
@@ -31,9 +45,12 @@ public class Grammar {
       for (int i = 0; i < current.length(); i++) {
         String sym = String.valueOf(current.charAt(i));
 
-        if (nonTerminals.contains(sym)) {
+        if (nonTerminals.contains(sym)) { // первый нетерминал
           List<String> rules = productions.get(sym);
-          String chosen = rules.get(rnd.nextInt(rules.size()));
+          String chosen = rules.get(rnd.nextInt(rules.size())); //рандом правило
+          if ("ε".equals(chosen)) {
+            chosen = "";
+          }
 
           current = current.substring(0, i) + chosen + current.substring(i + 1);
           break;
@@ -42,7 +59,7 @@ public class Grammar {
     }
 
     if (containsNonTerminal(current)) {
-      return generateString();
+      return generateString(); // если шагов не хватило тто все сначала
     }
 
     return current;
@@ -56,7 +73,102 @@ public class Grammar {
     return res;
   }
 
-  private boolean containsNonTerminal(String s) {
+  /**
+   * Classifies this grammar according to the Chomsky hierarchy.
+   * Type 3 (Regular) ⊂ Type 2 (Context-free) ⊂ Type 1 (Context-sensitive) ⊂ Type 0 (Unrestricted)
+   */
+  public AutomatonType classifyGrammar() {
+    Boolean linearity = null; // true=right-linear, false=left-linear, null=undetermined
+    boolean allType3 = true;
+    boolean allType2 = true;
+    boolean allType1 = true;
+
+    for (Map.Entry<String, List<String>> entry : productions.entrySet()) {
+      String left = entry.getKey();
+      for (String right : entry.getValue()) {
+        Type3Form form = getType3Form(left, right);
+        if (form == Type3Form.NONE) {
+          allType3 = false;
+        } else if (form == Type3Form.RIGHT_LINEAR) {
+          if (linearity != null && !linearity) {
+            allType3 = false;
+          }
+          linearity = true;
+        } else if (form == Type3Form.LEFT_LINEAR) {
+          if (linearity != null && linearity) {
+            allType3 = false;
+          }
+          linearity = false;
+        }
+        if (!isType2Production(left, right)) {
+          allType2 = false;
+        }
+        if (!isType1Production(left, right)) {
+          allType1 = false;
+        }
+      }
+    }
+
+    if (allType3) {
+      return AutomatonType.TYPE_3_REGULAR;
+    }
+    if (allType2) {
+      return AutomatonType.TYPE_2_CONTEXT_FREE;
+    }
+    if (allType1) {
+      return AutomatonType.TYPE_1_CONTEXT_SENSITIVE;
+    }
+    return AutomatonType.TYPE_0_UNRESTRICTED;
+  }
+
+  private enum Type3Form { RIGHT_LINEAR, LEFT_LINEAR, TERMINAL_OR_EPSILON, NONE }
+
+  private Type3Form getType3Form(String left, String right) {
+    if (right.isEmpty()) {
+      return left.equals(startSymbol) ? Type3Form.TERMINAL_OR_EPSILON : Type3Form.NONE;
+    }
+    if ("ε".equals(right)) {
+      return Type3Form.TERMINAL_OR_EPSILON;
+    }
+    if (right.length() == 1) {
+      return terminals.contains(right) ? Type3Form.TERMINAL_OR_EPSILON : Type3Form.NONE;
+    }
+    if (right.length() >= 2) {
+      String first = String.valueOf(right.charAt(0));
+      String rest = right.substring(1);
+      if (terminals.contains(first) && nonTerminals.contains(rest)) {
+        return Type3Form.RIGHT_LINEAR;
+      }
+      if (nonTerminals.contains(first) && terminals.contains(rest)) {
+        return Type3Form.LEFT_LINEAR;
+      }
+    }
+    return Type3Form.NONE;
+  }
+
+  /** Type 2: A → α, single non-terminal on left, |α| ≥ 1. */
+  private boolean isType2Production(String left, String right) {
+    if (left.length() != 1 || !nonTerminals.contains(left)) {
+      return false;
+    }
+    if (right.isEmpty()) {
+      return left.equals(startSymbol);
+    }
+    return true;
+  }
+
+  /** Type 1: αAβ → αγβ, |γ| ≥ 1, or S → ε. Context-sensitive. */
+  private boolean isType1Production(String left, String right) {
+    if (right.isEmpty()) {
+      return left.equals(startSymbol);
+    }
+    if (left.length() > right.length()) {
+      return false; // Context-sensitive: |αAβ| ≤ |αγβ|
+    }
+    return true;
+  }
+
+  private boolean containsNonTerminal(String s) { //есть ли заглавные нетерменалы
     for (int i = 0; i < s.length(); i++) {
       if (nonTerminals.contains(String.valueOf(s.charAt(i)))) {
         return true;
@@ -67,10 +179,10 @@ public class Grammar {
 
   public FiniteAutomaton toFiniteAutomaton() {
 
-    String finalState = "F";
+    String finalState = "F"; //финальное состояние
 
     Set<String> states = new HashSet<>(nonTerminals);
-    states.add(finalState);
+    states.add(finalState);// все состояния
 
     Set<Character> alphabet = new HashSet<>();
     for (String t : terminals) {
@@ -79,9 +191,12 @@ public class Grammar {
 
     Map<String, Map<Character, String>> delta = new HashMap<>();
 
-    for (Map.Entry<String, List<String>> entry : productions.entrySet()) {
+    for (Map.Entry<String, List<String>> entry : productions.entrySet()) { //ищем  где final state
       String left = entry.getKey();
       for (String right : entry.getValue()) {
+        if ("ε".equals(right)) {
+          continue;
+        }
         char terminal = right.charAt(0);
 
         String next;
@@ -101,6 +216,26 @@ public class Grammar {
     Set<String> finalStates = Set.of(finalState);
 
     return new FiniteAutomaton(states, alphabet, delta, startState, finalStates);
+  }
+
+  public Set<String> getNonTerminals() {
+    return Set.copyOf(nonTerminals);
+  }
+
+  public Set<String> getTerminals() {
+    return Set.copyOf(terminals);
+  }
+
+  public Map<String, List<String>> getProductions() {
+    Map<String, List<String>> result = new HashMap<>();
+    for (Map.Entry<String, List<String>> e : productions.entrySet()) {
+      result.put(e.getKey(), new ArrayList<>(e.getValue()));
+    }
+    return result;
+  }
+
+  public String getStartSymbol() {
+    return startSymbol;
   }
 }
 

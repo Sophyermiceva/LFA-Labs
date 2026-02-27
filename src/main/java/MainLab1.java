@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Main {
+public class MainLab1 {
 
   public static void main(String[] args) {
     Grammar grammar = new Grammar();
