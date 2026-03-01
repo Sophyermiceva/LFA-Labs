@@ -28,5 +28,15 @@ The program generates valid strings based on the grammar rules and verifies stri
 Report:  
 [View Lab 1 Report](src/main/resources/reports/LAB1.md)
 
+### Lab 2 – Determinism in Finite Automata
+Variant: 11
+
+Description:
+Implementation of a Non-deterministic Finite Automaton (NDFA) and its conversion into a Deterministic Finite Automaton (DFA) using the subset construction method.  
+The laboratory work also includes conversion of a finite automaton into a regular grammar, verification of automaton determinism, and grammar classification according to the Chomsky hierarchy.
+
+Report:
+[View Lab 2 Report](src/main/resources/reports/LAB2.md)
+
 ---
 
