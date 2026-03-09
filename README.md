@@ -38,5 +38,16 @@ The laboratory work also includes conversion of a finite automaton into a regula
 Report:
 [View Lab 2 Report](src/main/resources/reports/LAB2.md)
 
+### Lab 3 – Lexer and Lexical Analysis
+Variant: 11
+
+Description:
+Implementation of a simple lexer in Java for lexical analysis of a small expression-based language.  
+The lexer processes input text character by character and converts it into a sequence of tokens such as keywords, identifiers, integers, floating-point numbers, operators, delimiters, and trigonometric functions.  
+The laboratory work demonstrates the principles of tokenization and the role of lexical analysis as one of the first stages in language processing.
+
+Report:
+[View Lab 3 Report](src/main/resources/reports/LAB3.md)
+
 ---
 
